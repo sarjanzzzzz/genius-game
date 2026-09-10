@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudoku — Genius Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Noto+Serif+JP:wght@200;400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #f5f0e8;
+  --bg-deep: #ebe4d6;
+  --ink: #1a1a1a;
+  --ink-light: #6b6456;
+  --accent: #c0392b;
+  --accent-soft: #e8d5d2;
+  --cell-bg: #faf7f0;
+  --cell-hover: #f0ebe0;
+  --cell-selected: #fff8dc;
+  --cell-highlight: #f5eed8;
+  --cell-same-num: #ede5cc;
+  --cell-error: #fde2e2;
+  --cell-given: #1a1a1a;
+  --cell-user: #2c5f8a;
+  --border-thick: #1a1a1a;
+  --border-thin: #c4baa8;
+  --notes-color: #8a7e6b;
+}
+
+/* ===== DIFFICULTY THEMES ===== */
+body.theme-beginner {
+  --bg: #f8f4ee; --ink: #2a2520; --ink-light: #7a7060;
+  --cell-bg: #fffdf8; --cell-hover: #f5f0e5; --cell-selected: #fff8dc;
+  --cell-highlight: #f8f2e0; --cell-same-num: #f0ebd5;
+  --border-thick: #3a3025; --border-thin: #d4cabb;
+  --accent: #6a9955; --accent-soft: #d4e8cc;
+  background: linear-gradient(135deg, #f8f4ee 0%, #f0ebe0 100%);
+}
+body.theme-easy {
+  --bg: #eef4f8; --ink: #1a2a35; --ink-light: #5a7080;
+  --cell-bg: #f5fafd; --cell-hover: #e8f0f5; --cell-selected: #e0f0ff;
+  --cell-highlight: #eaf2f8; --cell-same-num: #d8e8f2;
+  --border-thick: #1a3545; --border-thin: #b0c8d8;
+  --accent: #2980b9; --accent-soft: #c5dff0;
+  background: linear-gradient(135deg, #eef4f8 0%, #dce8f0 100%);
+}
+body.theme-normal {
+  --bg: #f5f0e8; --ink: #1a1a1a; --ink-light: #6b6456;
+  --cell-bg: #faf7f0; --cell-hover: #f0ebe0; --cell-selected: #fff8dc;
+  --cell-highlight: #f5eed8; --cell-same-num: #ede5cc;
+  --border-thick: #1a1a1a; --border-thin: #c4baa8;
+  --accent: #c0392b; --accent-soft: #e8d5d2;
+  background: linear-gradient(135deg, #f5f0e8 0%, #ebe4d6 100%);
+}
+body.theme-hard {
+  --bg: #e8e4e0; --ink: #1a1820; --ink-light: #5a5460;
+  --cell-bg: #f0edea; --cell-hover: #e5e0dc; --cell-selected: #f0e8d0;
+  --cell-highlight: #e8e2d8; --cell-same-num: #ddd8d0;
+  --border-thick: #1a1820; --border-thin: #b0a8a0;
+  --accent: #8e44ad; --accent-soft: #e0c8e8;
+  background: linear-gradient(135deg, #e8e4e0 0%, #d8d4d0 100%);
+}
+body.theme-professional {
+  --bg: #2a2a35; --ink: #e0dcd5; --ink-light: #9090a0;
+  --cell-bg: #35354a; --cell-hover: #40405a; --cell-selected: #505070;
+  --cell-highlight: #3a3a55; --cell-same-num: #454560;
+  --border-thick: #e0dcd5; --border-thin: #505068;
+  --accent: #c8a96e; --accent-soft: #4a4030;
+  --cell-given: #e0dcd5; --cell-user: #8cb4d8;
+  --notes-color: #7a7a90;
+  background: linear-gradient(135deg, #2a2a35 0%, #1e1e28 100%);
+}
+body.theme-epic {
+  --bg: #1a1028; --ink: #e8e0f0; --ink-light: #a090c0;
+  --cell-bg: #2a1e40; --cell-hover: #35284a; --cell-selected: #483870;
+  --cell-highlight: #302248; --cell-same-num: #3a2e55;
+  --border-thick: #c0a8e0; --border-thin: #4a3868;
+  --accent: #a06cd5; --accent-soft: #3a2050;
+  --cell-given: #e8e0f0; --cell-user: #80b8e8;
+  --notes-color: #8070a0;
+  background: linear-gradient(135deg, #1a1028 0%, #120a1e 100%);
+}
+body.theme-worldclass {
+  --bg: #1a0a0a; --ink: #f0e0e0; --ink-light: #b08080;
+  --cell-bg: #2a1515; --cell-hover: #351e1e; --cell-selected: #502828;
+  --cell-highlight: #301818; --cell-same-num: #3a2020;
+  --border-thick: #d09090; --border-thin: #4a2828;
+  --accent: #e04040; --accent-soft: #401818;
+  --cell-given: #f0e0e0; --cell-user: #e8a070;
+  --notes-color: #907070;
+  background: linear-gradient(135deg, #1a0a0a 0%, #120505 100%);
+}
+body.theme-disaster {
+  --bg: #0a0a0a; --ink: #ff4444; --ink-light: #aa3333;
+  --cell-bg: #151515; --cell-hover: #222; --cell-selected: #3a1010;
+  --cell-highlight: #1a1010; --cell-same-num: #251515;
+  --border-thick: #ff4444; --border-thin: #332020;
+  --accent: #ff2020; --accent-soft: #301010;
+  --cell-given: #ff6644; --cell-user: #ff4444;
+  --notes-color: #884444; --cell-error: #3a0a0a;
+  background: linear-gradient(135deg, #0a0a0a 0%, #050000 100%);
+}
+
+body {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  transition: background 0.5s ease;
+}
+
+.noise-overlay {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.hidden { display: none !important; }
+
+.screen {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 560px;
+  padding: 20px;
+}
+
+/* ===== MENU SCREEN ===== */
+.menu-container { text-align: center; }
+.menu-header { margin-bottom: 32px; }
+.back-link {
+  display: inline-block;
+  font-size: 0.75rem; letter-spacing: 0.1em;
+  color: var(--ink-light); text-decoration: none;
+  margin-bottom: 20px;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--ink); }
+
+.menu-title {
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 200; font-size: 2.6rem;
+  letter-spacing: 0.3em;
+}
+.menu-subtitle {
+  font-size: 0.6rem; letter-spacing: 0.4em;
+  text-transform: uppercase; color: var(--ink-light);
+  margin-top: 4px;
+}
+
+.diff-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.diff-card {
+  padding: 18px 12px;
+  border: 1px solid var(--border-thin);
+  background: var(--cell-bg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+.diff-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+.diff-card .diff-name {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 1rem; font-weight: 400;
+  margin-bottom: 4px;
+}
+.diff-card .diff-cells {
+  font-size: 0.65rem; color: var(--ink-light);
+  letter-spacing: 0.05em;
+}
+
+/* ===== GAME HEADER ===== */
+.game-header {
+  display: flex; align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.icon-btn {
+  background: none; border: 1px solid var(--border-thin);
+  color: var(--ink-light); cursor: pointer;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.icon-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+.header-center { flex: 1; }
+.diff-label {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 0.85rem; font-weight: 400;
+  letter-spacing: 0.1em;
+}
+
+.stats-row {
+  display: flex; gap: 16px; margin-top: 4px;
+}
+.stat {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 0.8rem; color: var(--ink-light);
+}
+.stat-icon { font-size: 0.7rem; }
+
+/* ===== BOARD ===== */
+.board-wrapper {
+  display: flex; justify-content: center;
+  margin-bottom: 16px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  border: 2.5px solid var(--border-thick);
+  background: var(--border-thin);
+  gap: 1px;
+  width: min(100%, 450px);
+  aspect-ratio: 1;
+}
+
+.cell {
+  background: var(--cell-bg);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Noto Serif JP', serif;
+  font-size: clamp(1.1rem, 3.5vw, 1.7rem);
+  cursor: pointer;
+  transition: background 0.12s ease;
+  position: relative;
+  user-select: none;
+  aspect-ratio: 1;
+}
+.cell:hover { background: var(--cell-hover); }
+.cell.given { color: var(--cell-given); font-weight: 400; }
+.cell.user { color: var(--cell-user); font-weight: 400; }
+.cell.selected { background: var(--cell-selected) !important; }
+.cell.highlighted { background: var(--cell-highlight); }
+.cell.same-number { background: var(--cell-same-num); }
+.cell.error { background: var(--cell-error) !important; color: var(--accent) !important; }
+
+.cell[data-col="2"], .cell[data-col="5"] { border-right: 2px solid var(--border-thick); }
+.cell[data-row="2"], .cell[data-row="5"] { border-bottom: 2px solid var(--border-thick); }
+
+/* Notes display */
+.notes-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  width: 100%; height: 100%;
+  position: absolute; inset: 0;
+  padding: 1px;
+}
+.notes-grid span {
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: clamp(0.35rem, 1.1vw, 0.55rem);
+  color: var(--notes-color); font-weight: 400;
+  line-height: 1;
+}
+
+/* ===== CONTROLS ===== */
+.controls { display: flex; flex-direction: column; gap: 10px; }
+
+.number-pad {
+  display: grid; grid-template-columns: repeat(9, 1fr);
+  gap: 4px;
+}
+.num-btn {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 1.2rem; padding: 10px 0;
+  border: 1px solid var(--border-thin);
+  background: var(--cell-bg); cursor: pointer;
+  transition: all 0.12s ease;
+  color: var(--ink);
+}
+.num-btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.num-btn.completed { opacity: 0.3; pointer-events: none; }
+
+.action-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.action-btn {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 0.65rem; letter-spacing: 0.04em;
+  text-transform: uppercase; padding: 10px 4px;
+  border: 1px solid var(--border-thin); background: transparent;
+  color: var(--ink-light); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: all 0.12s ease;
+}
+.action-btn:hover { border-color: var(--ink); color: var(--ink); }
+.action-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ===== MODALS ===== */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.65);
+  display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.show { display: flex; }
+
+.modal {
+  background: var(--bg); color: var(--ink);
+  padding: 40px; text-align: center;
+  border: 2px solid var(--border-thick);
+  max-width: 320px; width: 90%;
+}
+.modal-kanji {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 3.5rem; font-weight: 200;
+  margin-bottom: 8px; color: var(--accent);
+}
+.modal h2 {
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 400; font-size: 1.3rem;
+  margin-bottom: 8px;
+}
+.modal p {
+  color: var(--ink-light); font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+.modal-score {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 1.5rem; margin-bottom: 24px;
+  color: var(--accent);
+}
+
+.primary-btn {
+  display: block; width: 100%;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 0.75rem; letter-spacing: 0.15em;
+  text-transform: uppercase; padding: 14px;
+  border: none; background: var(--ink); color: var(--bg);
+  cursor: pointer; margin-bottom: 8px;
+  transition: background 0.2s;
+}
+.primary-btn:hover { background: var(--accent); }
+
+.secondary-btn {
+  display: block; width: 100%;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 0.7rem; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 12px;
+  border: 1px solid var(--border-thin); background: transparent;
+  color: var(--ink-light); cursor: pointer;
+  transition: all 0.2s;
+}
+.secondary-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeCell {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+.cell { animation: fadeCell 0.25s ease backwards; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+.cell.shake-wrong { animation: shake 0.3s ease; }
+
+@media (max-width: 480px) {
+  .screen { padding: 12px; }
+  .menu-title { font-size: 2rem; }
+  .diff-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stats-row { gap: 10px; }
+  .stat { font-size: 0.7rem; }
+}
+</style>
+</head>
+<body>
+<div class="noise-overlay"></div>
+
+<!-- MENU SCREEN -->
+<div class="screen" id="menuScreen">
+  <div class="menu-container">
+    <div class="menu-header">
+      <a href="index.html" class="back-link">&larr; Games</a>
+      <h1 class="menu-title">数 独</h1>
+      <p class="menu-subtitle">SUDOKU</p>
+    </div>
+    <div class="diff-grid" id="diffGrid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen hidden" id="gameScreen">
+  <div class="game-container">
+    <header class="game-header">
+      <button class="icon-btn" id="backBtn" title="Back to menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="header-center">
+        <span class="diff-label" id="diffLabel"></span>
+        <div class="stats-row">
+          <div class="stat">
+            <span class="stat-icon">&#9201;</span>
+            <span id="timer">00:00</span>
+          </div>
+          <div class="stat">
+            <span class="stat-icon">&#9733;</span>
+            <span id="score">0</span>
+          </div>
+          <div class="stat wrong-stat">
+            <span class="stat-icon">&#10005;</span>
+            <span id="wrongCount">0</span>/3
+          </div>
+          <div class="stat hint-stat">
+            <span class="stat-icon">&#9432;</span>
+            <span id="hintCount">5</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="board-wrapper">
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="controls">
+      <div class="number-pad" id="numberPad">
+        <!-- Populated by JS -->
+      </div>
+      <div class="action-buttons">
+        <button class="action-btn" id="undoBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h13a4 4 0 0 1 0 8H7"/><polyline points="7 6 3 10 7 14"/></svg>
+          Undo
+        </button>
+        <button class="action-btn" id="eraseBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16l9-9 8 8-4 4z"/></svg>
+          Erase
+        </button>
+        <button class="action-btn" id="notesBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span id="notesLabel">Notes Off</span>
+        </button>
+        <button class="action-btn" id="hintBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Hint
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOSE MODAL -->
+<div class="modal-overlay" id="loseModal">
+  <div class="modal">
+    <div class="modal-kanji">敗</div>
+    <h2>Game Over</h2>
+    <p id="loseMsg">3 mistakes reached.</p>
+    <div class="modal-score">Score: <span id="loseScore">0</span></div>
+    <button class="primary-btn" id="retryBtn">Retry</button>
+    <button class="secondary-btn" id="loseMenuBtn">Change Difficulty</button>
+  </div>
+</div>
+
+<!-- WIN MODAL -->
+<div class="modal-overlay" id="winModal">
+  <div class="modal">
+    <div class="modal-kanji">完</div>
+    <h2>Complete!</h2>
+    <p id="winTime"></p>
+    <div class="modal-score">Score: <span id="winScore">0</span></div>
+    <button class="primary-btn" id="playAgainBtn">Play Again</button>
+    <button class="secondary-btn" id="winMenuBtn">Change Difficulty</button>
+  </div>
+</div>
+
+<script>
+// ============ DIFFICULTY CONFIG ============
+const DIFFICULTIES = {
+  beginner:     { label: 'Beginner',     cellsToRemove: 25, multiplier: 1,   theme: 'theme-beginner' },
+  easy:         { label: 'Easy',         cellsToRemove: 32, multiplier: 2,   theme: 'theme-easy' },
+  normal:       { label: 'Normal',       cellsToRemove: 38, multiplier: 3,   theme: 'theme-normal' },
+  hard:         { label: 'Hard',         cellsToRemove: 44, multiplier: 5,   theme: 'theme-hard' },
+  professional: { label: 'Professional', cellsToRemove: 49, multiplier: 8,   theme: 'theme-professional' },
+  epic:         { label: 'Epic',         cellsToRemove: 53, multiplier: 12,  theme: 'theme-epic' },
+  worldclass:   { label: 'World Class',  cellsToRemove: 56, multiplier: 18,  theme: 'theme-worldclass' },
+  disaster:     { label: 'Disaster',     cellsToRemove: 58, multiplier: 25,  theme: 'theme-disaster' },
+};
+
+const MAX_WRONG = 3;
+const MAX_HINTS = 5;
+
+// ============ SUDOKU ENGINE ============
+class SudokuEngine {
+  generate(cellsToRemove) {
+    const grid = Array.from({length:9}, () => Array(9).fill(0));
+    this.fillGrid(grid);
+    const solution = grid.map(r => [...r]);
+    this.removeCells(grid, cellsToRemove);
+    return { puzzle: grid, solution };
+  }
+
+  fillGrid(grid) {
+    const empty = this.findEmpty(grid);
+    if (!empty) return true;
+    const [r, c] = empty;
+    const nums = this.shuffle([1,2,3,4,5,6,7,8,9]);
+    for (const n of nums) {
+      if (this.isValid(grid, r, c, n)) {
+        grid[r][c] = n;
+        if (this.fillGrid(grid)) return true;
+        grid[r][c] = 0;
+      }
+    }
+    return false;
+  }
+
+  removeCells(grid, count) {
+    const positions = this.shuffle(
+      Array.from({length:81}, (_,i) => [Math.floor(i/9), i%9])
+    );
+    for (let i = 0; i < count && i < positions.length; i++) {
+      const [r,c] = positions[i];
+      grid[r][c] = 0;
+    }
+  }
+
+  findEmpty(grid) {
+    for (let r = 0; r < 9; r++)
+      for (let c = 0; c < 9; c++)
+        if (grid[r][c] === 0) return [r, c];
+    return null;
+  }
+
+  isValid(grid, row, col, num) {
+    for (let i = 0; i < 9; i++) {
+      if (grid[row][i] === num || grid[i][col] === num) return false;
+    }
+    const br = Math.floor(row/3)*3, bc = Math.floor(col/3)*3;
+    for (let r = br; r < br+3; r++)
+      for (let c = bc; c < bc+3; c++)
+        if (grid[r][c] === num) return false;
+    return true;
+  }
+
+  shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i+1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+}
+
+// ============ GAME STATE ============
+const engine = new SudokuEngine();
+let board = [];
+let solution = [];
+let given = [];
+let notes = Array.from({length:81}, () => new Set());
+let selectedCell = -1;
+let notesMode = false;
+let history = [];
+let timerSeconds = 0;
+let timerInterval = null;
+let currentDifficulty = 'normal';
+let gameActive = false;
+let wrongCount = 0;
+let hintsLeft = MAX_HINTS;
+let score = 0;
+
+// ============ DOM REFS ============
+const menuScreen = document.getElementById('menuScreen');
+const gameScreen = document.getElementById('gameScreen');
+const boardEl = document.getElementById('board');
+const timerEl = document.getElementById('timer');
+const scoreEl = document.getElementById('score');
+const wrongEl = document.getElementById('wrongCount');
+const hintCountEl = document.getElementById('hintCount');
+const diffLabelEl = document.getElementById('diffLabel');
+const notesLabelEl = document.getElementById('notesLabel');
+const notesBtnEl = document.getElementById('notesBtn');
+const winModal = document.getElementById('winModal');
+const loseModal = document.getElementById('loseModal');
+
+// ============ MENU ============
+function buildMenu() {
+  const grid = document.getElementById('diffGrid');
+  grid.innerHTML = '';
+  Object.entries(DIFFICULTIES).forEach(([key, diff]) => {
+    const card = document.createElement('div');
+    card.className = 'diff-card';
+    card.innerHTML = `
+      <div class="diff-name">${diff.label}</div>
+      <div class="diff-cells">${81 - diff.cellsToRemove} given cells</div>
+    `;
+    card.addEventListener('click', () => startGame(key));
+    grid.appendChild(card);
+  });
+}
+
+function showMenu() {
+  gameActive = false;
+  clearInterval(timerInterval);
+  document.body.className = '';
+  menuScreen.classList.remove('hidden');
+  gameScreen.classList.add('hidden');
+  winModal.classList.remove('show');
+  loseModal.classList.remove('show');
+}
+
+function showGame() {
+  menuScreen.classList.add('hidden');
+  gameScreen.classList.remove('hidden');
+}
+
+// ============ START GAME ============
+function startGame(diffKey) {
+  currentDifficulty = diffKey;
+  const diff = DIFFICULTIES[diffKey];
+
+  document.body.className = diff.theme;
+  diffLabelEl.textContent = diff.label;
+
+  const result = engine.generate(diff.cellsToRemove);
+  board = result.puzzle.map(r => [...r]);
+  solution = result.solution;
+  given = result.puzzle.map(r => r.map(v => v !== 0));
+  notes = Array.from({length:81}, () => new Set());
+  selectedCell = -1;
+  notesMode = false;
+  history = [];
+  wrongCount = 0;
+  hintsLeft = MAX_HINTS;
+  score = 0;
+  gameActive = true;
+
+  notesBtnEl.classList.remove('active');
+  notesLabelEl.textContent = 'Notes Off';
+
+  updateStats();
+  renderBoard();
+  renderNumberPad();
+  startTimer();
+  showGame();
+}
+
+// ============ RENDER ============
+function renderBoard() {
+  boardEl.innerHTML = '';
+  for (let i = 0; i < 81; i++) {
+    const r = Math.floor(i/9), c = i % 9;
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.index = i;
+    cell.dataset.row = r;
+    cell.dataset.col = c;
+    cell.style.animationDelay = `${(r*9+c)*6}ms`;
+
+    if (given[r][c]) {
+      cell.classList.add('given');
+      cell.textContent = board[r][c];
+    } else if (board[r][c] !== 0) {
+      cell.classList.add('user');
+      cell.textContent = board[r][c];
+      if (board[r][c] !== solution[r][c]) cell.classList.add('error');
+    } else if (notes[i].size > 0) {
+      const grid = document.createElement('div');
+      grid.className = 'notes-grid';
+      for (let n = 1; n <= 9; n++) {
+        const span = document.createElement('span');
+        span.textContent = notes[i].has(n) ? n : '';
+        grid.appendChild(span);
+      }
+      cell.appendChild(grid);
+    }
+
+    cell.addEventListener('click', () => selectCell(i));
+    boardEl.appendChild(cell);
+  }
+  updateHighlights();
+}
+
+function updateHighlights() {
+  document.querySelectorAll('.cell').forEach(cell => {
+    cell.classList.remove('selected', 'highlighted', 'same-number');
+  });
+  if (selectedCell < 0) return;
+  const sr = Math.floor(selectedCell/9), sc = selectedCell % 9;
+  const selVal = board[sr][sc];
+
+  document.querySelectorAll('.cell').forEach(cell => {
+    const idx = +cell.dataset.index;
+    const r = Math.floor(idx/9), c = idx % 9;
+    if (idx === selectedCell) {
+      cell.classList.add('selected');
+    } else if (r === sr || c === sc ||
+      (Math.floor(r/3) === Math.floor(sr/3) && Math.floor(c/3) === Math.floor(sc/3))) {
+      cell.classList.add('highlighted');
+    }
+    if (selVal !== 0 && board[r][c] === selVal && idx !== selectedCell) {
+      cell.classList.add('same-number');
+    }
+  });
+}
+
+function renderNumberPad() {
+  const pad = document.getElementById('numberPad');
+  pad.innerHTML = '';
+  for (let n = 1; n <= 9; n++) {
+    const btn = document.createElement('button');
+    btn.className = 'num-btn';
+    btn.dataset.num = n;
+    btn.textContent = n;
+    btn.addEventListener('click', () => placeNumber(n));
+    pad.appendChild(btn);
+  }
+  updateNumBtnStates();
+}
+
+function updateNumBtnStates() {
+  document.querySelectorAll('.num-btn').forEach(btn => {
+    const n = +btn.dataset.num;
+    let count = 0;
+    for (let r = 0; r < 9; r++)
+      for (let c = 0; c < 9; c++)
+        if (board[r][c] === n) count++;
+    btn.classList.toggle('completed', count >= 9);
+  });
+}
+
+function updateStats() {
+  wrongEl.textContent = wrongCount;
+  hintCountEl.textContent = hintsLeft;
+  scoreEl.textContent = score;
+}
+
+// ============ INTERACTIONS ============
+function selectCell(idx) {
+  selectedCell = idx;
+  updateHighlights();
+}
+
+function placeNumber(num) {
+  if (selectedCell < 0 || !gameActive) return;
+  const r = Math.floor(selectedCell/9), c = selectedCell % 9;
+  if (given[r][c]) return;
+
+  if (notesMode) {
+    // Notes mode: just jot down, no wrong check
+    history.push({ idx: selectedCell, row: r, col: c, val: board[r][c], notes: new Set(notes[selectedCell]), type: 'note' });
+    if (notes[selectedCell].has(num)) notes[selectedCell].delete(num);
+    else notes[selectedCell].add(num);
+    if (board[r][c] !== 0) {
+      history[history.length-1].val = board[r][c];
+      board[r][c] = 0;
+    }
+    renderBoard();
+  } else {
+    // Answer mode: check correctness
+    if (board[r][c] !== 0) return; // already has answer, use erase first
+    if (num !== solution[r][c]) {
+      // Wrong answer
+      wrongCount++;
+      score = Math.max(0, score - 50);
+      updateStats();
+      // Shake animation
+      renderBoard();
+      const cell = boardEl.querySelector(`[data-index="${selectedCell}"]`);
+      if (cell) {
+        cell.classList.add('shake-wrong', 'error');
+        cell.textContent = num;
+        setTimeout(() => cell.classList.remove('shake-wrong'), 300);
+      }
+      if (wrongCount >= MAX_WRONG) {
+        gameActive = false;
+        clearInterval(timerInterval);
+        setTimeout(showLoseModal, 600);
+      }
+      return;
+    }
+
+    // Correct answer
+    history.push({ idx: selectedCell, row: r, col: c, val: 0, notes: new Set(notes[selectedCell]), type: 'place' });
+    board[r][c] = num;
+    notes[selectedCell].clear();
+    removePeerNotes(r, c, num);
+
+    // Score: difficulty multiplier + time bonus
+    const diff = DIFFICULTIES[currentDifficulty];
+    score += diff.multiplier * 10;
+    updateStats();
+    renderBoard();
+    updateNumBtnStates();
+    checkWin();
+  }
+}
+
+function removePeerNotes(row, col, num) {
+  for (let i = 0; i < 9; i++) {
+    notes[row*9+i].delete(num);
+    notes[i*9+col].delete(num);
+  }
+  const br = Math.floor(row/3)*3, bc = Math.floor(col/3)*3;
+  for (let r = br; r < br+3; r++)
+    for (let c = bc; c < bc+3; c++)
+      notes[r*9+c].delete(num);
+}
+
+function eraseCell() {
+  if (selectedCell < 0 || !gameActive) return;
+  const r = Math.floor(selectedCell/9), c = selectedCell % 9;
+  if (given[r][c]) return;
+  history.push({ idx: selectedCell, row: r, col: c, val: board[r][c], notes: new Set(notes[selectedCell]), type: 'erase' });
+  board[r][c] = 0;
+  notes[selectedCell].clear();
+  renderBoard();
+  updateNumBtnStates();
+}
+
+function undoAction() {
+  if (history.length === 0 || !gameActive) return;
+  const action = history.pop();
+  board[action.row][action.col] = action.val;
+  notes[action.idx] = new Set(action.notes);
+  if (action.type === 'place') score = Math.max(0, score - DIFFICULTIES[currentDifficulty].multiplier * 10);
+  selectedCell = action.idx;
+  updateStats();
+  renderBoard();
+  updateNumBtnStates();
+}
+
+function useHint() {
+  if (!gameActive || hintsLeft <= 0) return;
+  const emptyCells = [];
+  for (let r = 0; r < 9; r++)
+    for (let c = 0; c < 9; c++)
+      if (board[r][c] === 0 || board[r][c] !== solution[r][c])
+        emptyCells.push([r,c]);
+  if (emptyCells.length === 0) return;
+
+  // Prefer selected cell if it's empty
+  let target;
+  if (selectedCell >= 0) {
+    const sr = Math.floor(selectedCell/9), sc = selectedCell % 9;
+    if (board[sr][sc] === 0 || board[sr][sc] !== solution[sr][sc]) {
+      target = [sr, sc];
+    }
+  }
+  if (!target) {
+    target = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+  }
+
+  const [r, c] = target;
+  const idx = r*9+c;
+  hintsLeft--;
+  score = Math.max(0, score - 30);
+
+  history.push({ idx, row: r, col: c, val: board[r][c], notes: new Set(notes[idx]), type: 'hint' });
+  board[r][c] = solution[r][c];
+  notes[idx].clear();
+  given[r][c] = true; // mark as given so it can't be changed
+  selectedCell = idx;
+
+  updateStats();
+  renderBoard();
+  updateNumBtnStates();
+  checkWin();
+}
+
+// ============ TIMER ============
+function startTimer() {
+  clearInterval(timerInterval);
+  timerSeconds = 0;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => { timerSeconds++; updateTimerDisplay(); }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = String(Math.floor(timerSeconds/60)).padStart(2,'0');
+  const s = String(timerSeconds%60).padStart(2,'0');
+  timerEl.textContent = `${m}:${s}`;
+}
+
+// ============ WIN / LOSE ============
+function checkWin() {
+  for (let r = 0; r < 9; r++)
+    for (let c = 0; c < 9; c++)
+      if (board[r][c] !== solution[r][c]) return;
+
+  gameActive = false;
+  clearInterval(timerInterval);
+
+  // Time bonus: more points for faster solve
+  const diff = DIFFICULTIES[currentDifficulty];
+  const baseScore = diff.cellsToRemove * diff.multiplier * 10;
+  const timeBonus = Math.max(0, 300 - timerSeconds) * diff.multiplier;
+  const wrongPenalty = wrongCount * 50;
+  const hintPenalty = (MAX_HINTS - hintsLeft) * 30;
+  score = Math.max(0, baseScore + timeBonus - wrongPenalty - hintPenalty);
+
+  scoreEl.textContent = score;
+  const m = Math.floor(timerSeconds/60), s = timerSeconds%60;
+  document.getElementById('winTime').textContent = `Time: ${m}m ${s}s | Mistakes: ${wrongCount}`;
+  document.getElementById('winScore').textContent = score;
+  setTimeout(() => winModal.classList.add('show'), 400);
+}
+
+function showLoseModal() {
+  document.getElementById('loseMsg').textContent = `${wrongCount} mistakes reached.`;
+  document.getElementById('loseScore').textContent = score;
+  loseModal.classList.add('show');
+}
+
+// ============ EVENT LISTENERS ============
+document.getElementById('undoBtn').addEventListener('click', undoAction);
+document.getElementById('eraseBtn').addEventListener('click', eraseCell);
+document.getElementById('hintBtn').addEventListener('click', useHint);
+document.getElementById('backBtn').addEventListener('click', showMenu);
+document.getElementById('retryBtn').addEventListener('click', () => { loseModal.classList.remove('show'); startGame(currentDifficulty); });
+document.getElementById('loseMenuBtn').addEventListener('click', () => { loseModal.classList.remove('show'); showMenu(); });
+document.getElementById('playAgainBtn').addEventListener('click', () => { winModal.classList.remove('show'); startGame(currentDifficulty); });
+document.getElementById('winMenuBtn').addEventListener('click', () => { winModal.classList.remove('show'); showMenu(); });
+
+notesBtnEl.addEventListener('click', () => {
+  notesMode = !notesMode;
+  notesBtnEl.classList.toggle('active', notesMode);
+  notesLabelEl.textContent = notesMode ? 'Notes On' : 'Notes Off';
+});
+
+// Keyboard support
+document.addEventListener('keydown', (e) => {
+  if (!gameActive) return;
+  if (e.key >= '1' && e.key <= '9') placeNumber(+e.key);
+  if (e.key === 'Backspace' || e.key === 'Delete') eraseCell();
+  if (e.key === 'n' || e.key === 'N') {
+    notesMode = !notesMode;
+    notesBtnEl.classList.toggle('active', notesMode);
+    notesLabelEl.textContent = notesMode ? 'Notes On' : 'Notes Off';
+  }
+  if (e.key === 'z' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undoAction(); }
+  if (selectedCell >= 0) {
+    const r = Math.floor(selectedCell/9), c = selectedCell % 9;
+    if (e.key === 'ArrowUp' && r > 0) selectCell((r-1)*9+c);
+    if (e.key === 'ArrowDown' && r < 8) selectCell((r+1)*9+c);
+    if (e.key === 'ArrowLeft' && c > 0) selectCell(r*9+(c-1));
+    if (e.key === 'ArrowRight' && c < 8) selectCell(r*9+(c+1));
+  }
+});
+
+// ============ INIT ============
+buildMenu();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"75124c326cb447fe934cde04713ae013","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
