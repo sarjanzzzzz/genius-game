@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laser Chess — Genius Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0e1a;
+  --bg-deep: #060810;
+  --ink: #e0e8f0;
+  --ink-light: #6a7a8a;
+  --accent: #00d4ff;
+  --accent-glow: rgba(0, 212, 255, 0.3);
+  --red: #ff4444;
+  --red-glow: rgba(255, 68, 68, 0.3);
+  --blue: #44aaff;
+  --blue-glow: rgba(68, 170, 255, 0.3);
+  --cell-bg: #1a1e2a;
+  --cell-hover: #252a38;
+  --cell-selected: #2a3040;
+  --border: #2a3040;
+  --grid-line: #1a2030;
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.scanlines {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 212, 255, 0.02) 2px,
+    rgba(0, 212, 255, 0.02) 4px
+  );
+}
+
+.container {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 640px;
+  padding: 20px;
+}
+
+.hidden { display: none !important; }
+
+.screen {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 640px;
+  padding: 20px;
+}
+
+/* ===== MENU SCREEN ===== */
+.menu-container { text-align: center; }
+.menu-header { margin-bottom: 32px; }
+
+.back-link {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.75rem; letter-spacing: 0.1em;
+  color: var(--ink-light); text-decoration: none;
+  margin-bottom: 20px; text-transform: uppercase;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--accent); }
+
+.menu-icon {
+  width: 64px; height: 64px;
+  margin: 0 auto 12px;
+  color: var(--accent);
+  opacity: 0.8;
+}
+.menu-icon svg { width: 100%; height: 100%; }
+
+.menu-title {
+  font-family: var(--font-display);
+  font-weight: 600; font-size: 1.8rem;
+  letter-spacing: 0.15em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.menu-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.7rem; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--ink-light);
+}
+
+.menu-section {
+  margin-bottom: 28px;
+}
+
+.menu-section h3 {
+  font-family: var(--font-display);
+  font-size: 0.7rem; letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  margin-bottom: 12px;
+}
+
+.setup-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.setup-card {
+  padding: 14px 8px;
+  border: 1px solid var(--border);
+  background: var(--cell-bg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.setup-card:hover {
+  border-color: var(--accent);
+  background: var(--cell-hover);
+}
+.setup-card.selected {
+  border-color: var(--accent);
+  background: var(--cell-selected);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.difficulty-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.diff-card {
+  padding: 14px 8px;
+  border: 1px solid var(--border);
+  background: var(--cell-bg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.diff-card:hover {
+  border-color: var(--accent);
+  background: var(--cell-hover);
+}
+.diff-card.selected {
+  border-color: var(--accent);
+  background: var(--cell-selected);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.start-btn {
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 0.9rem; letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 18px;
+  border: none;
+  background: var(--accent);
+  color: var(--bg);
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+  font-weight: 600;
+}
+.start-btn:hover {
+  background: #fff;
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.rules-btn {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 0.75rem; letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink-light);
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+.rules-btn:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+/* ===== GAME HEADER ===== */
+.game-header {
+  display: flex; align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.icon-btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--ink-light); cursor: pointer;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.header-center { flex: 1; text-align: center; }
+
+.turn-indicator {
+  font-family: var(--font-display);
+  font-size: 0.85rem; font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.setup-label {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  margin-top: 2px;
+}
+
+/* ===== BOARD ===== */
+.board-wrapper {
+  position: relative;
+  display: flex; justify-content: center;
+  margin-bottom: 16px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+  border: 2px solid var(--border);
+  background: var(--grid-line);
+  gap: 1px;
+  width: min(100%, 480px);
+  aspect-ratio: 8/10;
+  position: relative;
+}
+
+.cell {
+  background: var(--cell-bg);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  position: relative;
+  user-select: none;
+  aspect-ratio: 1;
+}
+.cell:hover { background: var(--cell-hover); }
+.cell.selected { background: var(--cell-selected); box-shadow: inset 0 0 8px var(--accent-glow); }
+
+.cell.restricted-red {
+  background: linear-gradient(135deg, var(--cell-bg) 0%, rgba(255, 68, 68, 0.05) 100%);
+}
+.cell.restricted-blue {
+  background: linear-gradient(135deg, var(--cell-bg) 0%, rgba(68, 170, 255, 0.05) 100%);
+}
+
+/* Pieces */
+.piece {
+  width: 80%; height: 80%;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.piece svg {
+  width: 100%; height: 100%;
+}
+
+.piece.blue { color: var(--blue); }
+.piece.red { color: var(--red); }
+
+.piece.removing {
+  animation: removePiece 0.4s ease forwards;
+}
+
+@keyframes removePiece {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.5; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+/* Laser overlay */
+.laser-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.laser-beam {
+  stroke: var(--red);
+  stroke-width: 3;
+  fill: none;
+  filter: drop-shadow(0 0 8px var(--red-glow));
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: shootLaser 0.6s ease forwards;
+}
+
+@keyframes shootLaser {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ===== ACTION BAR ===== */
+.action-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.action-btn {
+  font-family: var(--font-body);
+  font-size: 0.7rem; letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 12px 8px;
+  border: 1px solid var(--border);
+  background: var(--cell-bg);
+  color: var(--ink);
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  transition: all 0.12s ease;
+  font-weight: 500;
+}
+.action-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--cell-hover);
+}
+.action-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.action-btn.fire {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.action-btn.fire:hover:not(:disabled) {
+  background: #fff;
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* ===== MODALS ===== */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0, 0, 0, 0.85);
+  display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.show { display: flex; }
+
+.modal {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 40px; text-align: center;
+  max-width: 480px; width: 90%;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: none; border: none;
+  color: var(--ink-light);
+  font-size: 2rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.close-btn:hover { color: var(--accent); }
+
+.modal h2 {
+  font-family: var(--font-display);
+  font-weight: 600; font-size: 1.3rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 20px;
+}
+
+.modal p {
+  color: var(--ink-light);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.modal-icon {
+  width: 64px; height: 64px;
+  margin: 0 auto 16px;
+}
+.modal-icon svg { width: 100%; height: 100%; }
+.win-icon { color: var(--accent); }
+.lose-icon { color: var(--red); opacity: 0.7; }
+
+.rules-content {
+  text-align: left;
+}
+
+.rule-section {
+  margin-bottom: 20px;
+}
+
+.rule-section h3 {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.rule-section ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.rule-section li {
+  font-size: 0.85rem;
+  color: var(--ink);
+  margin-bottom: 6px;
+  padding-left: 16px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.rule-section li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.primary-btn {
+  display: block; width: 100%;
+  font-family: var(--font-display);
+  font-size: 0.8rem; letter-spacing: 0.15em;
+  text-transform: uppercase; padding: 16px;
+  border: none; background: var(--accent); color: var(--bg);
+  cursor: pointer; margin-bottom: 8px;
+  transition: all 0.2s;
+  font-weight: 600;
+}
+.primary-btn:hover {
+  background: #fff;
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+.secondary-btn {
+  display: block; width: 100%;
+  font-family: var(--font-body);
+  font-size: 0.7rem; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 14px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--ink-light); cursor: pointer;
+  transition: all 0.2s;
+}
+.secondary-btn:hover {
+  border-color: var(--accent); color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .screen { padding: 12px; }
+  .menu-title { font-size: 1.4rem; }
+  .setup-grid { grid-template-columns: repeat(3, 1fr); }
+  .setup-card { font-size: 0.75rem; padding: 10px 6px; }
+  .difficulty-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+
+<!-- MENU SCREEN -->
+<div class="screen" id="menuScreen">
+  <div class="menu-container">
+    <div class="menu-header">
+      <a href="index.html" class="back-link">&larr; Games</a>
+      <div class="menu-icon">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="4" y="8" width="40" height="32" rx="2"/>
+          <circle cx="10" cy="24" r="3" fill="currentColor"/>
+          <circle cx="38" cy="24" r="3" fill="currentColor"/>
+          <path d="M13 24 L20 20 L24 28 L28 20 L35 24" stroke-width="2"/>
+        </svg>
+      </div>
+      <h1 class="menu-title">LASER CHESS</h1>
+      <p class="menu-subtitle">Khet Edition</p>
+    </div>
+
+    <div class="menu-section">
+      <h3>SELECT BOARD SETUP</h3>
+      <div class="setup-grid" id="setupGrid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <h3>SELECT DIFFICULTY</h3>
+      <div class="difficulty-grid" id="difficultyGrid">
+        <button class="diff-card" data-diff="easy">Easy</button>
+        <button class="diff-card" data-diff="medium">Medium</button>
+        <button class="diff-card" data-diff="hard">Hard</button>
+        <button class="diff-card" data-diff="ultimate">Ultimate</button>
+      </div>
+    </div>
+
+    <button class="start-btn" id="startBtn">START GAME</button>
+    <button class="rules-btn" id="rulesBtn">HOW TO PLAY</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen hidden" id="gameScreen">
+  <div class="game-container">
+    <header class="game-header">
+      <button class="icon-btn" id="backBtn" title="Back to menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="header-center">
+        <div class="turn-indicator" id="turnIndicator">YOUR TURN</div>
+        <div class="setup-label" id="setupLabel"></div>
+      </div>
+      <button class="icon-btn" id="rulesBtnGame" title="Rules">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+    </header>
+
+    <div class="board-wrapper">
+      <div class="board" id="board"></div>
+      <div class="laser-overlay" id="laserOverlay"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="action-btn" id="rotateLeftBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Rotate Left
+      </button>
+      <button class="action-btn" id="rotateRightBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
+        Rotate Right
+      </button>
+      <button class="action-btn" id="fireBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+        Fire Laser
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- RULES MODAL -->
+<div class="modal-overlay" id="rulesModal">
+  <div class="modal rules-modal">
+    <button class="close-btn" id="closeRulesBtn">&times;</button>
+    <h2>HOW TO PLAY</h2>
+    <div class="rules-content">
+      <div class="rule-section">
+        <h3>OBJECTIVE</h3>
+        <p>Be the first to hit your opponent's <strong>King</strong> with the laser beam.</p>
+      </div>
+
+      <div class="rule-section">
+        <h3>PIECES</h3>
+        <ul>
+          <li><strong>Laser:</strong> Emits the laser beam. Cannot be moved or destroyed.</li>
+          <li><strong>King:</strong> Your most important piece. If the laser hits it, you lose. Can be moved like other pieces.</li>
+          <li><strong>Deflector:</strong> Has one mirrored side that reflects the laser 90°. Destroyed if hit on any non-mirrored side.</li>
+          <li><strong>Defender:</strong> Has a front shield that blocks the laser. Can be destroyed if hit from the sides or back.</li>
+          <li><strong>Switch:</strong> Has mirrors on both sides. Cannot be destroyed. Can swap places with an adjacent Deflector or Defender.</li>
+        </ul>
+      </div>
+
+      <div class="rule-section">
+        <h3>TURN STRUCTURE</h3>
+        <p>On your turn, you must do ONE of these actions:</p>
+        <ul>
+          <li><strong>Move</strong> any of your pieces one square in any direction (including diagonally)</li>
+          <li><strong>Rotate</strong> one of your pieces 90° left or right (changes mirror direction)</li>
+          <li><strong>Swap</strong> a Switch with an adjacent Deflector or Defender</li>
+        </ul>
+        <p>After your action, you <strong>fire the laser</strong>. The beam travels from your Laser piece, bouncing off mirrors according to the angles, and destroys any piece it hits on a non-mirrored side.</p>
+      </div>
+
+      <div class="rule-section">
+        <h3>RESTRICTIONS</h3>
+        <ul>
+          <li>Red pieces cannot enter red spiral zones (along the edges)</li>
+          <li>Blue pieces cannot enter blue spiral zones</li>
+          <li>The laser can hit your own pieces too!</li>
+        </ul>
+      </div>
+
+      <div class="rule-section">
+        <h3>CONTROLS</h3>
+        <ul>
+          <li><strong>Click a piece</strong> to select it</li>
+          <li><strong>Click a destination square</strong> to move there</li>
+          <li><strong>Rotate buttons</strong> to rotate the selected piece</li>
+          <li><strong>Fire Laser</strong> to shoot after your move</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WIN MODAL -->
+<div class="modal-overlay" id="winModal">
+  <div class="modal">
+    <div class="modal-icon win-icon">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M24 4 L28 18 L44 18 L31 28 L35 44 L24 34 L13 44 L17 28 L4 18 L20 18 Z"/>
+      </svg>
+    </div>
+    <h2>VICTORY!</h2>
+    <p>You destroyed the enemy King!</p>
+    <button class="primary-btn" id="playAgainBtn">Play Again</button>
+    <button class="secondary-btn" id="winMenuBtn">Change Setup</button>
+  </div>
+</div>
+
+<!-- LOSE MODAL -->
+<div class="modal-overlay" id="loseModal">
+  <div class="modal">
+    <div class="modal-icon lose-icon">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="24" cy="24" r="20"/>
+        <line x1="16" y1="16" x2="32" y2="32"/>
+        <line x1="32" y1="16" x2="16" y2="32"/>
+      </svg>
+    </div>
+    <h2>DEFEAT</h2>
+    <p>Your King was destroyed!</p>
+    <button class="primary-btn" id="retryBtn">Try Again</button>
+    <button class="secondary-btn" id="loseMenuBtn">Change Setup</button>
+  </div>
+</div>
+
+<script>
+// ============ CONSTANTS ============
+const BOARD_W = 8, BOARD_H = 10;
+const PLAYER = 'blue', AI = 'red';
+
+// Piece types
+const LASER = 'laser';
+const KING = 'king';
+const DEFLECTOR = 'deflector';
+const DEFENDER = 'defender';
+const SWITCH = 'switch';
+
+// Directions: 0=right, 1=down, 2=left, 3=up
+const DIR = { R: 0, D: 1, L: 2, U: 3 };
+const DX = [1, 0, -1, 0];
+const DY = [0, 1, 0, -1];
+
+// ============ PIECE SVG GENERATORS ============
+function pieceSVG(type, side, rotation) {
+  const rot = (rotation || 0) * 90;
+  let svg = '';
+  switch(type) {
+    case LASER:
+      svg = `<svg viewBox="0 0 40 40"><rect x="8" y="8" width="24" height="24" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="20" cy="20" r="6" fill="currentColor" opacity="0.6"/><path d="M20 14 L20 8" stroke="currentColor" stroke-width="2.5"/></svg>`;
+      break;
+    case KING:
+      svg = `<svg viewBox="0 0 40 40"><rect x="10" y="10" width="20" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="20,6 16,14 24,14" fill="currentColor" opacity="0.5"/><rect x="16" y="16" width="8" height="8" fill="currentColor" opacity="0.3"/></svg>`;
+      break;
+    case DEFLECTOR:
+      svg = `<svg viewBox="0 0 40 40"><rect x="10" y="10" width="20" height="20" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="10" y1="10" x2="30" y2="30" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="20" r="2" fill="currentColor" opacity="0.4"/></svg>`;
+      break;
+    case DEFENDER:
+      svg = `<svg viewBox="0 0 40 40"><rect x="10" y="10" width="20" height="20" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="10" width="5" height="20" fill="currentColor" opacity="0.4" rx="1"/><circle cx="24" cy="20" r="2" fill="currentColor" opacity="0.4"/></svg>`;
+      break;
+    case SWITCH:
+      svg = `<svg viewBox="0 0 40 40"><rect x="10" y="10" width="20" height="20" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="10" y1="10" x2="30" y2="30" stroke="currentColor" stroke-width="2"/><line x1="30" y1="10" x2="10" y2="30" stroke="currentColor" stroke-width="2"/><circle cx="20" cy="20" r="3" fill="currentColor" opacity="0.3"/></svg>`;
+      break;
+  }
+  return svg;
+}
+
+// ============ BOARD SETUP CONFIGURATIONS ============
+// Each setup defines piece positions for both sides
+// Pieces: [type, side, col, row, rotation, mirrorAngle]
+// mirrorAngle: 0 = \ (top-left to bottom-right), 1 = / (top-right to bottom-left)
+const SETUPS = {
+  ace: {
+    name: 'Ace',
+    desc: 'Classic starter',
+    blue: [
+      { type: LASER, col: 0, row: 9, rotation: 3 },
+      { type: KING, col: 1, row: 9, rotation: 3 },
+      { type: DEFLECTOR, col: 2, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 3, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 4, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 5, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 1, row: 8, rotation: 0, shield: 3 },
+      { type: DEFENDER, col: 2, row: 8, rotation: 0, shield: 3 },
+      { type: DEFENDER, col: 3, row: 8, rotation: 0, shield: 3 },
+      { type: SWITCH, col: 4, row: 8, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 5, row: 8, rotation: 0, mirror: 1 },
+    ],
+    red: [
+      { type: LASER, col: 7, row: 0, rotation: 1 },
+      { type: KING, col: 6, row: 0, rotation: 1 },
+      { type: DEFLECTOR, col: 5, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 4, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 3, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 2, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 6, row: 1, rotation: 0, shield: 1 },
+      { type: DEFENDER, col: 5, row: 1, rotation: 0, shield: 1 },
+      { type: DEFENDER, col: 4, row: 1, rotation: 0, shield: 1 },
+      { type: SWITCH, col: 3, row: 1, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 2, row: 1, rotation: 0, mirror: 1 },
+    ]
+  },
+  curiosity: {
+    name: 'Curiosity',
+    desc: 'Strategic layout',
+    blue: [
+      { type: LASER, col: 0, row: 9, rotation: 3 },
+      { type: KING, col: 2, row: 9, rotation: 3 },
+      { type: DEFLECTOR, col: 1, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 3, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 4, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 5, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 6, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 1, row: 8, rotation: 0, shield: 3 },
+      { type: DEFENDER, col: 2, row: 8, rotation: 0, shield: 3 },
+      { type: SWITCH, col: 3, row: 8, rotation: 0, mirror: 0 },
+      { type: SWITCH, col: 4, row: 8, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 5, row: 8, rotation: 0, shield: 3 },
+      { type: DEFENDER, col: 6, row: 8, rotation: 0, shield: 3 },
+    ],
+    red: [
+      { type: LASER, col: 7, row: 0, rotation: 1 },
+      { type: KING, col: 5, row: 0, rotation: 1 },
+      { type: DEFLECTOR, col: 6, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 4, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 3, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 2, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 1, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 6, row: 1, rotation: 0, shield: 1 },
+      { type: DEFENDER, col: 5, row: 1, rotation: 0, shield: 1 },
+      { type: SWITCH, col: 4, row: 1, rotation: 0, mirror: 0 },
+      { type: SWITCH, col: 3, row: 1, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 2, row: 1, rotation: 0, shield: 1 },
+      { type: DEFENDER, col: 1, row: 1, rotation: 0, shield: 1 },
+    ]
+  },
+  grail: {
+    name: 'Grail',
+    desc: 'Balanced formation',
+    blue: [
+      { type: LASER, col: 0, row: 9, rotation: 3 },
+      { type: KING, col: 1, row: 9, rotation: 3 },
+      { type: DEFLECTOR, col: 2, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 3, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 4, row: 9, rotation: 0, shield: 3 },
+      { type: DEFENDER, col: 5, row: 9, rotation: 0, shield: 3 },
+      { type: DEFLECTOR, col: 6, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 7, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 1, row: 8, rotation: 0, shield: 3 },
+      { type: SWITCH, col: 2, row: 8, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 3, row: 8, rotation: 0, mirror: 1 },
+      { type: SWITCH, col: 4, row: 8, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 5, row: 8, rotation: 0, mirror: 0 },
+      { type: SWITCH, col: 6, row: 8, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 7, row: 8, rotation: 0, shield: 3 },
+    ],
+    red: [
+      { type: LASER, col: 7, row: 0, rotation: 1 },
+      { type: KING, col: 6, row: 0, rotation: 1 },
+      { type: DEFLECTOR, col: 5, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 4, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 3, row: 0, rotation: 0, shield: 1 },
+      { type: DEFENDER, col: 2, row: 0, rotation: 0, shield: 1 },
+      { type: DEFLECTOR, col: 1, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 0, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 6, row: 1, rotation: 0, shield: 1 },
+      { type: SWITCH, col: 5, row: 1, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 4, row: 1, rotation: 0, mirror: 1 },
+      { type: SWITCH, col: 3, row: 1, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 2, row: 1, rotation: 0, mirror: 0 },
+      { type: SWITCH, col: 1, row: 1, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 0, row: 1, rotation: 0, shield: 1 },
+    ]
+  },
+  mercury: {
+    name: 'Mercury',
+    desc: 'Aggressive opening',
+    blue: [
+      { type: LASER, col: 0, row: 9, rotation: 3 },
+      { type: KING, col: 3, row: 9, rotation: 3 },
+      { type: DEFLECTOR, col: 1, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 2, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 4, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 5, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 6, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 1, row: 8, rotation: 0, shield: 3 },
+      { type: SWITCH, col: 2, row: 8, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 3, row: 8, rotation: 0, shield: 3 },
+      { type: SWITCH, col: 4, row: 8, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 5, row: 8, rotation: 0, shield: 3 },
+      { type: SWITCH, col: 6, row: 8, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 7, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 7, row: 8, rotation: 0, shield: 3 },
+    ],
+    red: [
+      { type: LASER, col: 7, row: 0, rotation: 1 },
+      { type: KING, col: 4, row: 0, rotation: 1 },
+      { type: DEFLECTOR, col: 6, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 5, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 3, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 2, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 1, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 6, row: 1, rotation: 0, shield: 1 },
+      { type: SWITCH, col: 5, row: 1, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 4, row: 1, rotation: 0, shield: 1 },
+      { type: SWITCH, col: 3, row: 1, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 2, row: 1, rotation: 0, shield: 1 },
+      { type: SWITCH, col: 1, row: 1, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 0, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 0, row: 1, rotation: 0, shield: 1 },
+    ]
+  },
+  sophie: {
+    name: 'Sophie',
+    desc: 'Complex battle',
+    blue: [
+      { type: LASER, col: 0, row: 9, rotation: 3 },
+      { type: KING, col: 2, row: 9, rotation: 3 },
+      { type: DEFLECTOR, col: 1, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 3, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 4, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 5, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 6, row: 9, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 7, row: 9, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 1, row: 8, rotation: 0, shield: 3 },
+      { type: SWITCH, col: 2, row: 8, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 3, row: 8, rotation: 0, shield: 3 },
+      { type: SWITCH, col: 4, row: 8, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 5, row: 8, rotation: 0, shield: 3 },
+      { type: SWITCH, col: 6, row: 8, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 7, row: 8, rotation: 0, shield: 3 },
+      { type: DEFLECTOR, col: 2, row: 7, rotation: 0, mirror: 0 },
+    ],
+    red: [
+      { type: LASER, col: 7, row: 0, rotation: 1 },
+      { type: KING, col: 5, row: 0, rotation: 1 },
+      { type: DEFLECTOR, col: 6, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 4, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 3, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 2, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFLECTOR, col: 1, row: 0, rotation: 0, mirror: 1 },
+      { type: DEFLECTOR, col: 0, row: 0, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 6, row: 1, rotation: 0, shield: 1 },
+      { type: SWITCH, col: 5, row: 1, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 4, row: 1, rotation: 0, shield: 1 },
+      { type: SWITCH, col: 3, row: 1, rotation: 0, mirror: 1 },
+      { type: DEFENDER, col: 2, row: 1, rotation: 0, shield: 1 },
+      { type: SWITCH, col: 1, row: 1, rotation: 0, mirror: 0 },
+      { type: DEFENDER, col: 0, row: 1, rotation: 0, shield: 1 },
+      { type: DEFLECTOR, col: 5, row: 2, rotation: 0, mirror: 0 },
+    ]
+  }
+};
+
+// Restricted zones (where each side cannot move)
+// Blue cannot enter blue-restricted cells (top-left corner pattern)
+// Red cannot enter red-restricted cells (bottom-right corner pattern)
+function isRestricted(col, row, side) {
+  // Top-left corner zone (red restricted)
+  if (col < 2 && row < 2) return side === AI;
+  // Bottom-right corner zone (blue restricted)
+  if (col > 5 && row > 7) return side === PLAYER;
+  // Top-right corner zone (red restricted)
+  if (col > 5 && row < 2) return side === AI;
+  // Bottom-left corner zone (blue restricted)
+  if (col < 2 && row > 7) return side === PLAYER;
+  return false;
+}
+
+// ============ GAME STATE ============
+let grid = []; // grid[row][col] = piece or null
+let pieces = []; // all pieces
+let selectedPiece = null;
+let currentTurn = PLAYER;
+let currentSetup = 'ace';
+let currentDifficulty = 'easy';
+let gameActive = false;
+let laserPath = [];
+let animatingLaser = false;
+
+// ============ DOM REFS ============
+const menuScreen = document.getElementById('menuScreen');
+const gameScreen = document.getElementById('gameScreen');
+const boardEl = document.getElementById('board');
+const laserOverlay = document.getElementById('laserOverlay');
+const turnIndicator = document.getElementById('turnIndicator');
+const setupLabel = document.getElementById('setupLabel');
+const rulesModal = document.getElementById('rulesModal');
+const winModal = document.getElementById('winModal');
+const loseModal = document.getElementById('loseModal');
+
+// ============ MENU ============
+function buildMenu() {
+  const setupGrid = document.getElementById('setupGrid');
+  setupGrid.innerHTML = '';
+  Object.entries(SETUPS).forEach(([key, setup]) => {
+    const card = document.createElement('div');
+    card.className = 'setup-card' + (key === currentSetup ? ' selected' : '');
+    card.textContent = setup.name;
+    card.title = setup.desc;
+    card.addEventListener('click', () => {
+      currentSetup = key;
+      document.querySelectorAll('.setup-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+    setupGrid.appendChild(card);
+  });
+
+  document.querySelectorAll('.diff-card').forEach(card => {
+    card.classList.toggle('selected', card.dataset.diff === currentDifficulty);
+    card.addEventListener('click', () => {
+      currentDifficulty = card.dataset.diff;
+      document.querySelectorAll('.diff-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  });
+}
+
+function showMenu() {
+  gameActive = false;
+  menuScreen.classList.remove('hidden');
+  gameScreen.classList.add('hidden');
+  winModal.classList.remove('show');
+  loseModal.classList.remove('show');
+}
+
+function showGame() {
+  menuScreen.classList.add('hidden');
+  gameScreen.classList.remove('hidden');
+}
+
+// ============ INIT GAME ============
+function initGame() {
+  const setup = SETUPS[currentSetup];
+  grid = Array.from({length: BOARD_H}, () => Array(BOARD_W).fill(null));
+  pieces = [];
+
+  // Place pieces
+  const placePiece = (def, side) => {
+    const piece = {
+      type: def.type,
+      side: side,
+      col: def.col,
+      row: def.row,
+      rotation: def.rotation || 0,
+      mirror: def.mirror !== undefined ? def.mirror : null,
+      shield: def.shield !== undefined ? def.shield : null,
+      alive: true
+    };
+    pieces.push(piece);
+    grid[def.row][def.col] = piece;
+  };
+
+  setup.blue.forEach(p => placePiece(p, PLAYER));
+  setup.red.forEach(p => placePiece(p, AI));
+
+  selectedPiece = null;
+  currentTurn = PLAYER;
+  gameActive = true;
+  animatingLaser = false;
+
+  setupLabel.textContent = setup.name + ' | ' + currentDifficulty.toUpperCase();
+  updateTurnIndicator();
+  renderBoard();
+  showGame();
+}
+
+// ============ RENDER ============
+function renderBoard() {
+  boardEl.innerHTML = '';
+  for (let row = 0; row < BOARD_H; row++) {
+    for (let col = 0; col < BOARD_W; col++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.col = col;
+      cell.dataset.row = row;
+
+      // Restricted zones
+      if (isRestricted(col, row, AI)) cell.classList.add('restricted-red');
+      if (isRestricted(col, row, PLAYER)) cell.classList.add('restricted-blue');
+
+      // Piece
+      const piece = grid[row][col];
+      if (piece && piece.alive) {
+        const pieceEl = document.createElement('div');
+        pieceEl.className = `piece ${piece.side === PLAYER ? 'blue' : 'red'}`;
+        pieceEl.style.transform = `rotate(${piece.rotation * 90}deg)`;
+        pieceEl.innerHTML = pieceSVG(piece.type, piece.side, piece.rotation);
+        cell.appendChild(pieceEl);
+      }
+
+      if (selectedPiece && selectedPiece.col === col && selectedPiece.row === row) {
+        cell.classList.add('selected');
+      }
+
+      cell.addEventListener('click', () => onCellClick(col, row));
+      boardEl.appendChild(cell);
+    }
+  }
+}
+
+function updateTurnIndicator() {
+  turnIndicator.textContent = currentTurn === PLAYER ? 'YOUR TURN' : 'AI THINKING...';
+  turnIndicator.style.color = currentTurn === PLAYER ? 'var(--blue)' : 'var(--red)';
+}
+
+// ============ INTERACTIONS ============
+function onCellClick(col, row) {
+  if (!gameActive || currentTurn !== PLAYER || animatingLaser) return;
+
+  const piece = grid[row][col];
+
+  if (selectedPiece) {
+    if (piece && piece === selectedPiece) {
+      // Deselect
+      selectedPiece = null;
+      renderBoard();
+      return;
+    }
+    if (!piece || !piece.alive) {
+      // Move selected piece to this cell
+      tryMove(selectedPiece, col, row);
+      return;
+    }
+    if (piece && piece.side === PLAYER && piece !== selectedPiece) {
+      // Select different piece
+      selectedPiece = piece;
+      renderBoard();
+      return;
+    }
+  } else {
+    if (piece && piece.alive && piece.side === PLAYER && piece.type !== LASER) {
+      selectedPiece = piece;
+      renderBoard();
+    }
+  }
+}
+
+function tryMove(piece, toCol, toRow) {
+  const dc = Math.abs(toCol - piece.col);
+  const dr = Math.abs(toRow - piece.row);
+  if (dc > 1 || dr > 1) return false; // Must move exactly 1 square
+  if (toCol < 0 || toCol >= BOARD_W || toRow < 0 || toRow >= BOARD_H) return false;
+  if (isRestricted(toCol, toRow, piece.side)) return false;
+  if (grid[toRow][toCol] && grid[toRow][toCol].alive) return false; // Cell occupied
+
+  // Execute move
+  grid[piece.row][piece.col] = null;
+  piece.col = toCol;
+  piece.row = toRow;
+  grid[toRow][toCol] = piece;
+  selectedPiece = null;
+  renderBoard();
+
+  // Fire laser after move
+  setTimeout(() => fireLaser(), 300);
+  return true;
+}
+
+function rotatePiece(dir) {
+  if (!gameActive || currentTurn !== PLAYER || !selectedPiece || animatingLaser) return;
+  if (selectedPiece.type === LASER) return;
+
+  selectedPiece.rotation = (selectedPiece.rotation + dir + 4) % 4;
+  renderBoard();
+  // Fire laser after rotation
+  setTimeout(() => fireLaser(), 300);
+}
+
+// ============ LASER LOGIC ============
+function traceLaser(side) {
+  // Find laser piece for this side
+  const laser = pieces.find(p => p.type === LASER && p.side === side && p.alive);
+  if (!laser) return [];
+
+  const path = [{ col: laser.col, row: laser.row }];
+  let x = laser.col, y = laser.row;
+  // Laser fires perpendicular to its rotation: rotation 0/2 = fires right/left, 1/3 = fires down/up
+  let dir = laser.rotation; // 0=right, 1=down, 2=left, 3=up
+
+  const hitPieces = [];
+  const visited = new Set();
+  let maxSteps = 200;
+
+  while (maxSteps-- > 0) {
+    const nx = x + DX[dir];
+    const ny = y + DY[dir];
+
+    if (nx < 0 || nx >= BOARD_W || ny < 0 || ny >= BOARD_H) break;
+
+    const key = `${nx},${ny},${dir}`;
+    if (visited.has(key)) break;
+    visited.add(key);
+
+    x = nx; y = ny;
+    path.push({ col: x, row: y });
+
+    const piece = grid[y][x];
+    if (!piece || !piece.alive) continue;
+
+    if (piece.type === LASER) break; // Stop at laser
+
+    if (piece.type === SWITCH) {
+      // Switch has mirrors on both sides (\ and /), laser passes through
+      // Determine which mirror face it hits
+      const incomingFrom = (dir + 2) % 4;
+      // Switch mirrors: \ reflects R->D, D->R, L->U, U->L
+      // and / reflects R->U, U->R, L->D, D->L
+      // With rotation, the mirrors rotate too
+      const rot = piece.rotation % 2; // 0 or 1
+      if (rot === 0) {
+        // \ mirror
+        if (dir === DIR.R) dir = DIR.D;
+        else if (dir === DIR.D) dir = DIR.R;
+        else if (dir === DIR.L) dir = DIR.U;
+        else if (dir === DIR.U) dir = DIR.L;
+      } else {
+        // / mirror
+        if (dir === DIR.R) dir = DIR.U;
+        else if (dir === DIR.U) dir = DIR.R;
+        else if (dir === DIR.L) dir = DIR.D;
+        else if (dir === DIR.D) dir = DIR.L;
+      }
+      continue; // Switch is never destroyed
+    }
+
+    if (piece.type === DEFLECTOR) {
+      // Has one mirror. The mirror angle depends on rotation and mirror property
+      const rot = (piece.rotation + (piece.mirror || 0)) % 2;
+      // Hit check: if laser hits the mirrored side, reflect; if non-mirrored, destroy
+      const incomingFrom = (dir + 2) % 4;
+      // Mirror is on one side: 0=\ (reflects R->D), 1=/ (reflects R->U)
+      if (rot === 0) {
+        // \
+        if (dir === DIR.R) { dir = DIR.D; continue; }
+        if (dir === DIR.D) { dir = DIR.R; continue; }
+        if (dir === DIR.L) { dir = DIR.U; continue; }
+        if (dir === DIR.U) { dir = DIR.L; continue; }
+      } else {
+        // /
+        if (dir === DIR.R) { dir = DIR.U; continue; }
+        if (dir === DIR.U) { dir = DIR.R; continue; }
+        if (dir === DIR.L) { dir = DIR.D; continue; }
+        if (dir === DIR.D) { dir = DIR.L; continue; }
+      }
+      // If we get here, laser hit the non-mirrored side
+      hitPieces.push(piece);
+      break;
+    }
+
+    if (piece.type === DEFENDER) {
+      // Shield blocks from one direction. Shield direction is piece.shield (0=R, 1=D, 2=L, 3=U)
+      // Plus rotation
+      const shieldDir = (piece.shield + piece.rotation) % 4;
+      if (dir === shieldDir) {
+        // Blocked by shield, defender survives
+        break;
+      } else {
+        // Hit from side or back, destroyed
+        hitPieces.push(piece);
+        break;
+      }
+    }
+
+    if (piece.type === KING) {
+      hitPieces.push(piece);
+      break;
+    }
+  }
+
+  return { path, hitPieces };
+}
+
+function fireLaser() {
+  if (animatingLaser) return;
+  animatingLaser = true;
+
+  const result = traceLaser(currentTurn);
+  laserPath = result.path;
+
+  // Animate laser
+  animateLaser(result.path, () => {
+    // Destroy hit pieces
+    result.hitPieces.forEach(p => {
+      p.alive = false;
+      grid[p.row][p.col] = null;
+    });
+
+    renderBoard();
+
+    // Check win
+    const hitKing = result.hitPieces.find(p => p.type === KING);
+    if (hitKing) {
+      gameActive = false;
+      if (hitKing.side === AI) {
+        setTimeout(() => winModal.classList.add('show'), 400);
+      } else {
+        setTimeout(() => loseModal.classList.add('show'), 400);
+      }
+      animatingLaser = false;
+      return;
+    }
+
+    // Switch turn
+    currentTurn = currentTurn === PLAYER ? AI : PLAYER;
+    updateTurnIndicator();
+    selectedPiece = null;
+    renderBoard();
+
+    animatingLaser = false;
+
+    // AI turn
+    if (currentTurn === AI && gameActive) {
+      setTimeout(aiTurn, 800);
+    }
+  });
+}
+
+function animateLaser(path, callback) {
+  laserOverlay.innerHTML = '';
+  if (path.length < 2) { callback(); return; }
+
+  const boardRect = boardEl.getBoundingClientRect();
+  const cellW = boardRect.width / BOARD_W;
+  const cellH = boardRect.height / BOARD_H;
+
+  const points = path.map(p => ({
+    x: p.col * cellW + cellW / 2,
+    y: p.row * cellH + cellH / 2
+  }));
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', `0 0 ${boardRect.width} ${boardRect.height}`);
+  svg.setAttribute('width', boardRect.width);
+  svg.setAttribute('height', boardRect.height);
+
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    d += ` L ${points[i].x} ${points[i].y}`;
+  }
+
+  const beam = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  beam.setAttribute('d', d);
+  beam.setAttribute('class', 'laser-beam');
+  beam.style.stroke = currentTurn === PLAYER ? 'var(--blue)' : 'var(--red)';
+  beam.style.filter = `drop-shadow(0 0 8px ${currentTurn === PLAYER ? 'var(--blue-glow)' : 'var(--red-glow)'})`;
+
+  svg.appendChild(beam);
+  laserOverlay.appendChild(svg);
+
+  setTimeout(() => {
+    laserOverlay.innerHTML = '';
+    callback();
+  }, 700);
+}
+
+// ============ AI ============
+function aiTurn() {
+  if (!gameActive || currentTurn !== AI) return;
+
+  // Get all AI pieces (excluding laser)
+  const myPieces = pieces.filter(p => p.side === AI && p.alive && p.type !== LASER);
+  const moves = [];
+
+  // Generate all possible moves
+  myPieces.forEach(piece => {
+    // Move moves
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        const nc = piece.col + dx, nr = piece.row + dy;
+        if (nc < 0 || nc >= BOARD_W || nr < 0 || nr >= BOARD_H) continue;
+        if (isRestricted(nc, nr, AI)) continue;
+        if (grid[nr][nc] && grid[nr][nc].alive) continue;
+        moves.push({ type: 'move', piece, toCol: nc, toRow: nr });
+      }
+    }
+    // Rotate moves
+    if (piece.type !== LASER) {
+      moves.push({ type: 'rotate', piece, dir: 1 });
+      moves.push({ type: 'rotate', piece, dir: -1 });
+    }
+  });
+
+  if (moves.length === 0) { gameActive = false; return; }
+
+  let chosen;
+
+  if (currentDifficulty === 'easy') {
+    chosen = moves[Math.floor(Math.random() * moves.length)];
+  } else if (currentDifficulty === 'medium') {
+    // Try to move pieces toward player side
+    moves.forEach(m => {
+      m.score = 0;
+      if (m.type === 'move') {
+        m.score = (m.toRow - m.piece.row) * 2; // Prefer moving down
+        // Check if the move puts us in a good laser position
+        const afterMove = simulateMove(m);
+        const laserResult = traceLaserFromGrid(afterMove, AI);
+        if (laserResult.hitPieces.find(p => p.type === KING)) m.score += 100;
+        if (laserResult.hitPieces.find(p => p.side === PLAYER)) m.score += 20;
+        if (laserResult.hitPieces.find(p => p.side === AI)) m.score -= 30;
+      } else {
+        const afterRot = simulateRotate(m);
+        const laserResult = traceLaserFromGrid(afterRot, AI);
+        if (laserResult.hitPieces.find(p => p.type === KING)) m.score += 100;
+        if (laserResult.hitPieces.find(p => p.side === PLAYER)) m.score += 20;
+        if (laserResult.hitPieces.find(p => p.side === AI)) m.score -= 30;
+      }
+    });
+    moves.sort((a, b) => b.score - a.score);
+    // Pick from top 3 with some randomness
+    const topN = Math.min(3, moves.length);
+    chosen = moves[Math.floor(Math.random() * topN)];
+  } else if (currentDifficulty === 'hard') {
+    moves.forEach(m => {
+      m.score = 0;
+      if (m.type === 'move') {
+        m.score = (m.toRow - m.piece.row) * 3;
+        const afterMove = simulateMove(m);
+        const laserResult = traceLaserFromGrid(afterMove, AI);
+        if (laserResult.hitPieces.find(p => p.type === KING && p.side === PLAYER)) m.score += 200;
+        if (laserResult.hitPieces.find(p => p.side === PLAYER && p.type !== KING)) m.score += 30;
+        if (laserResult.hitPieces.find(p => p.side === AI)) m.score -= 50;
+        // Check if opponent can kill us next turn
+        const oppResult = traceLaserFromGrid(afterMove, PLAYER);
+        if (oppResult.hitPieces.find(p => p.type === KING && p.side === AI)) m.score -= 100;
+      } else {
+        const afterRot = simulateRotate(m);
+        const laserResult = traceLaserFromGrid(afterRot, AI);
+        if (laserResult.hitPieces.find(p => p.type === KING && p.side === PLAYER)) m.score += 200;
+        if (laserResult.hitPieces.find(p => p.side === PLAYER && p.type !== KING)) m.score += 30;
+        if (laserResult.hitPieces.find(p => p.side === AI)) m.score -= 50;
+        const oppResult = traceLaserFromGrid(afterRot, PLAYER);
+        if (oppResult.hitPieces.find(p => p.type === KING && p.side === AI)) m.score -= 100;
+      }
+    });
+    moves.sort((a, b) => b.score - a.score);
+    chosen = moves[0];
+  } else { // ultimate
+    moves.forEach(m => {
+      m.score = 0;
+      if (m.type === 'move') {
+        m.score = (m.toRow - m.piece.row) * 4;
+        const afterMove = simulateMove(m);
+        const laserResult = traceLaserFromGrid(afterMove, AI);
+        if (laserResult.hitPieces.find(p => p.type === KING && p.side === PLAYER)) m.score += 500;
+        if (laserResult.hitPieces.find(p => p.side === PLAYER && p.type !== KING)) {
+          const victim = laserResult.hitPieces.find(p => p.side === PLAYER && p.type !== KING);
+          m.score += victim.type === SWITCH ? 40 : victim.type === DEFENDER ? 35 : 25;
+        }
+        if (laserResult.hitPieces.find(p => p.side === AI)) m.score -= 80;
+        const oppResult = traceLaserFromGrid(afterMove, PLAYER);
+        if (oppResult.hitPieces.find(p => p.type === KING && p.side === AI)) m.score -= 200;
+        if (oppResult.hitPieces.find(p => p.side === AI && p.type !== LASER)) m.score -= 40;
+      } else {
+        const afterRot = simulateRotate(m);
+        const laserResult = traceLaserFromGrid(afterRot, AI);
+        if (laserResult.hitPieces.find(p => p.type === KING && p.side === PLAYER)) m.score += 500;
+        if (laserResult.hitPieces.find(p => p.side === PLAYER && p.type !== KING)) m.score += 40;
+        if (laserResult.hitPieces.find(p => p.side === AI)) m.score -= 80;
+        const oppResult = traceLaserFromGrid(afterRot, PLAYER);
+        if (oppResult.hitPieces.find(p => p.type === KING && p.side === AI)) m.score -= 200;
+        if (oppResult.hitPieces.find(p => p.side === AI && p.type !== LASER)) m.score -= 40;
+      }
+    });
+    moves.sort((a, b) => b.score - a.score);
+    chosen = moves[0];
+  }
+
+  // Execute AI move
+  if (chosen.type === 'move') {
+    grid[chosen.piece.row][chosen.piece.col] = null;
+    chosen.piece.col = chosen.toCol;
+    chosen.piece.row = chosen.toRow;
+    grid[chosen.toRow][chosen.toCol] = chosen.piece;
+  } else {
+    chosen.piece.rotation = (chosen.piece.rotation + chosen.dir + 4) % 4;
+  }
+
+  renderBoard();
+  setTimeout(() => fireLaser(), 400);
+}
+
+function simulateMove(move) {
+  const saved = { col: move.piece.col, row: move.piece.row };
+  grid[move.piece.row][move.piece.col] = null;
+  move.piece.col = move.toCol;
+  move.piece.row = move.toRow;
+  grid[move.toRow][move.toCol] = move.piece;
+  const result = traceLaser(AI);
+  // Restore
+  grid[move.piece.row][move.piece.col] = null;
+  move.piece.col = saved.col;
+  move.piece.row = saved.row;
+  grid[saved.row][saved.col] = move.piece;
+  return result;
+}
+
+function simulateRotate(move) {
+  const savedRot = move.piece.rotation;
+  move.piece.rotation = (move.piece.rotation + move.dir + 4) % 4;
+  const result = traceLaser(AI);
+  move.piece.rotation = savedRot;
+  return result;
+}
+
+function traceLaserFromGrid(result, side) {
+  return result;
+}
+
+// ============ EVENT LISTENERS ============
+document.getElementById('startBtn').addEventListener('click', initGame);
+document.getElementById('rulesBtn').addEventListener('click', () => rulesModal.classList.add('show'));
+document.getElementById('rulesBtnGame').addEventListener('click', () => rulesModal.classList.add('show'));
+document.getElementById('closeRulesBtn').addEventListener('click', () => rulesModal.classList.remove('show'));
+document.getElementById('backBtn').addEventListener('click', showMenu);
+document.getElementById('playAgainBtn').addEventListener('click', () => { winModal.classList.remove('show'); initGame(); });
+document.getElementById('retryBtn').addEventListener('click', () => { loseModal.classList.remove('show'); initGame(); });
+document.getElementById('winMenuBtn').addEventListener('click', () => { winModal.classList.remove('show'); showMenu(); });
+document.getElementById('loseMenuBtn').addEventListener('click', () => { loseModal.classList.remove('show'); showMenu(); });
+
+document.getElementById('rotateLeftBtn').addEventListener('click', () => rotatePiece(-1));
+document.getElementById('rotateRightBtn').addEventListener('click', () => rotatePiece(1));
+document.getElementById('fireBtn').addEventListener('click', () => {
+  if (!gameActive || currentTurn !== PLAYER || animatingLaser) return;
+  if (!selectedPiece) return;
+  fireLaser();
+});
+
+// ============ INIT ============
+buildMenu();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"75124c326cb447fe934cde04713ae013","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
